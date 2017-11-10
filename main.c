@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -27,6 +28,25 @@ void usage(char *commande) {
 }
 
 int quiet=0;
+
+void print_rusage(struct rusage ru){
+    printf("user CPU time used %d µs\n", ru.ru_utime.tv_usec);
+    printf("system CPU time used %d µs\n", ru.ru_stime.tv_usec);
+    printf("maximum resident set size %ld\n", ru.ru_maxrss);
+    printf("integral shared memory size %ld\n", ru.ru_ixrss);
+    printf("integral unshared data size %ld\n", ru.ru_idrss);
+    printf("integral unshared stack size %ld\n", ru.ru_isrss);
+    printf("page reclaims %ld\n", ru.ru_minflt);
+    printf("page faults %ld\n", ru.ru_majflt);
+    printf("swaps %ld\n", ru.ru_nswap);
+    printf("block input operations %ld\n", ru.ru_inblock);
+    printf("block output operations %ld\n", ru.ru_oublock);
+    printf("IPC messages sent %ld\n", ru.ru_msgsnd);
+    printf("IPC messages received %ld\n", ru.ru_msgrcv);
+    printf("signals received %ld\n", ru.ru_nsignals);
+    printf("voluntary context switches %ld\n", ru.ru_nvcsw);
+    printf("involuntary context switches %ld\n", ru.ru_nivcsw);
+}
 
 int main(int argc, char *argv[]) {
     int opt, parallelism = 1;
@@ -80,8 +100,53 @@ int main(int argc, char *argv[]) {
     for (i=0; i<taille; i++)
         scanf(" %d", &tableau[i]);
 
+    // Time
+    struct timeval tv_before_sort, tv_after_sort;
+    struct rusage ru_before, ru_after;
+
+    // TODO : tester si les tests influent beaucoup
+    if (ressources == 1){
+        getrusage(RUSAGE_SELF, &ru_before);
+    }
+    if (temps == 1){
+        if (gettimeofday(&tv_before_sort, NULL) != 0){
+            perror("gettimeofday");
+        }
+    }
+
     /* Algo */
     algo_principal(parallelism, tableau, taille, arg);
+
+    if (temps == 1){
+        if (gettimeofday(&tv_after_sort, NULL) != 0){
+            perror("gettimeofday");
+        }
+        // TODO : rajouter les secondes (tv_sec
+        long result = (long) tv_after_sort.tv_usec - (long) tv_before_sort.tv_usec;
+        result 
+        assert(tv_after_sort.tv_usec >= 0);
+        assert(tv_before_sort.tv_usec >= 0);
+        /*
+        printf("Temps avant : %ld\nTemps après: %ld\n",
+                tv_before_sort.tv_usec, tv_after_sort.tv_usec);
+        printf("Le temps de traitement est de %ld µs.\n",
+                result
+                );
+                */
+
+        printf("%ld:", tv_after_sort.tv_usec);
+        printf("%ld:", tv_before_sort.tv_usec);
+        printf("%ld\n", result);
+    }
+    if (ressources == 1){
+        getrusage(RUSAGE_SELF, &ru_after);
+        printf("\n");
+        printf("rusage avant calcul :\n");
+        print_rusage(ru_before);
+        printf("\n");
+        printf("rusage après calcul :\n");
+        print_rusage(ru_after);
+    }
 
     return 0;
 }

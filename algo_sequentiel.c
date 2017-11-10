@@ -21,5 +21,5 @@ void algo_principal(int parallelism, int *tableau, int taille, char *arg)
 
     traitement(&args);
 
-    traitement_resultats(0, &args); 
+    traitement_resultats(0, &args);
 }
