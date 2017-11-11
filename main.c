@@ -121,11 +121,11 @@ int main(int argc, char *argv[]) {
         if (gettimeofday(&tv_after_sort, NULL) != 0){
             perror("gettimeofday");
         }
-        // TODO : rajouter les secondes (tv_sec
-        long result = (long) tv_after_sort.tv_usec - (long) tv_before_sort.tv_usec;
-        result 
-        assert(tv_after_sort.tv_usec >= 0);
-        assert(tv_before_sort.tv_usec >= 0);
+        long result = 0;
+        // Ajout des secondes au resultat
+        result +=
+            ((long) tv_after_sort.tv_sec - (long) tv_before_sort.tv_sec)*1000000;
+        result += (long) tv_after_sort.tv_usec - (long) tv_before_sort.tv_usec;
         /*
         printf("Temps avant : %ld\nTemps après: %ld\n",
                 tv_before_sort.tv_usec, tv_after_sort.tv_usec);
@@ -134,9 +134,8 @@ int main(int argc, char *argv[]) {
                 );
                 */
 
-        printf("%ld:", tv_after_sort.tv_usec);
-        printf("%ld:", tv_before_sort.tv_usec);
         printf("%ld\n", result);
+
     }
     if (ressources == 1){
         getrusage(RUSAGE_SELF, &ru_after);
