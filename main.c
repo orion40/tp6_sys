@@ -116,9 +116,14 @@ int main(int argc, char *argv[]) {
     // Initialisation des variables
     struct timeval t0, t1; // pour gettimeofday
     struct rusage ru; // Récupération rusage
+<<<<<<< HEAD
     struct timeval ru_utime_start, ru_utime_stop;
     struct timeval ru_stime_stop, ru_stime_start;
     //struct timeval * tab_temp; // Récupération time rusage temporaire
+=======
+    struct timeval ru_utime_start, ru_stime_start;
+    struct timeval ru_utime_stop, ru_stime_stop;
+>>>>>>> 2a4d03f20b028d6282ac75c029b0177203d37cf0
     ru_utime_start.tv_sec = 0;
     ru_utime_start.tv_usec = 0;
     ru_stime_start.tv_sec = 0;
