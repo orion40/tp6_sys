@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -6,11 +7,16 @@
 #include <sys/time.h>
 #include <getopt.h>
 #include <sys/resource.h>
+#include <string.h>
 
 #include "algo_principal.h"
 #include "temps.h"
 #include "commun.h"
 
+int quiet = 0;
+
+
+/* Affichage du rusage*/
 void print_rusage(struct rusage ru){
     printf("user CPU time used %ld s\n", (long)ru.ru_utime.tv_sec);
     printf("user CPU time used %ld µs\n", (long)ru.ru_utime.tv_usec);
@@ -32,6 +38,7 @@ void print_rusage(struct rusage ru){
     printf("involuntary context switches %ld\n", ru.ru_nivcsw);
 }
 
+
 void usage(char *commande) {
     fprintf(stderr, "Usage :\n");
     fprintf(stderr, "%s [ --parallelism number ] [ --quiet ] [ --time ] "
@@ -49,13 +56,72 @@ void usage(char *commande) {
     exit(1);
 }
 
-int quiet=0;
+
+/* Récupération rusage timeval */
+void get_rusage( struct rusage ru, struct timeval * t){
+    if (getrusage(RUSAGE_THREAD, &ru) != 0){
+            perror("getrusage");
+            exit(1);
+    }
+    t[0] = ru.ru_utime;
+    t[1] = ru.ru_stime;
+}
+
+
+/* Affichage des résultat */
+void affiche_rusage(char* s,
+                    struct timeval ru_start,
+                    struct timeval ru_stop
+                    ){
+
+    struct timeval ru_interval;
+
+    printf("%s start : %ld.%lds\n",
+        s, ru_start.tv_sec, ru_start.tv_usec
+    );
+    printf("%s stop : %ld.%lds\n",
+        s, ru_stop.tv_sec, ru_stop.tv_usec
+    );
+
+    if(ru_start.tv_usec > ru_stop.tv_usec){
+    ru_interval.tv_usec = ru_stop.tv_usec + 10000 - ru_start.tv_usec;
+    ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec - 1;
+    }
+    else{
+        ru_interval.tv_usec = ru_stop.tv_usec - ru_start.tv_usec;
+        ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec;
+    }
+
+    printf("intervalle rusage : %ld.%lds\n",
+        ru_interval.tv_sec, ru_interval.tv_usec
+    );
+    printf("\n");
+}
+
+
+
 
 int main(int argc, char *argv[]) {
     int opt, parallelism = 1;
     int taille, i, temps = 0, ressources = 0;
     int *tableau;
     char *arg=NULL;
+
+    // Initialisation des variables
+    struct timeval t0, t1; // pour gettimeofday
+    struct rusage ru; // Récupération rusage
+    struct timeval ru_utime_start, ru_stime_start;
+    struct timeval ru_utime_stop, ru_stime_stop;
+    //struct timeval * tab_temp; // Récupération time rusage temporaire
+    ru_utime_start.tv_sec = 0;
+    ru_utime_start.tv_usec = 0;
+    ru_stime_start.tv_sec = 0;
+    ru_stime_start.tv_usec = 0;
+    ru_utime_stop.tv_sec = 0;
+    ru_utime_stop.tv_usec = 0;
+    ru_stime_stop.tv_sec = 0;
+    ru_stime_stop.tv_usec = 0;
+    struct timeval tab_temp[2];
 
     struct option longopts[] = {
         { "help", required_argument, NULL, 'h' },
@@ -103,32 +169,29 @@ int main(int argc, char *argv[]) {
     for (i=0; i<taille; i++)
         scanf(" %d", &tableau[i]);
 
-    // Time
-    struct timeval t0, t1;
-    struct rusage usage;
-    struct timeval tv_rusage_before, tv_rusage_after;
-    tv_rusage_after.tv_usec = 0;
-    tv_rusage_after.tv_sec = 0;
-    tv_rusage_before.tv_usec = 0;
-    tv_rusage_before.tv_sec = 0;
 
-    // TODO : tester si les tests influent beaucoup
-    if (ressources == 1){
-        if (getrusage(RUSAGE_THREAD, &usage) != 0){
-            perror("getrusage");
-        }
-        tv_rusage_before = usage.ru_utime;
-    }
+    /* Test PREéxécution */
     if (temps == 1){
         if (gettimeofday(&t0, NULL) != 0){
             perror("gettimeofday");
             exit(1);
         }
     }
+    if (ressources == 1){
+        // Récupération valeur rusage
+        get_rusage(ru, tab_temp);
+        ru_utime_start = tab_temp[0];
+        ru_stime_start = tab_temp[1];
+    }
 
-    /* Algo */
+
+
+    /* EXECUTION */
     algo_principal(parallelism, tableau, taille, arg);
 
+
+
+    /* Test POSTéxécution */
     if (temps == 1){
         if (gettimeofday(&t1, NULL) != 0){
             perror("gettimeofday");
@@ -139,22 +202,28 @@ int main(int argc, char *argv[]) {
             ((long)t1.tv_sec - (long)t0.tv_sec)*1000000;
         result += (long) t1.tv_usec - (long) t0.tv_usec;
 
-        printf("%d;%ld.0", taille, result);
-
+        printf("%d;%ld", taille, result);
     }
     if (ressources == 1){
-        if (getrusage(RUSAGE_THREAD, &usage) != 0){
-            perror("getrusage");
-            exit(1);
-        } else {
-            tv_rusage_after = usage.ru_utime;
-            printf("tv_rusage_before: %ld.%lds\n",
-                    tv_rusage_before.tv_sec, tv_rusage_before.tv_usec);
-            printf("tv_rusage_after: %ld.%lds\n",
-                    tv_rusage_after.tv_sec, tv_rusage_after.tv_usec);
-            printf("\n");
-        }
+        // Récupération valeur rusage
+        get_rusage(ru, tab_temp);
+        ru_utime_stop = tab_temp[0];
+        ru_stime_stop = tab_temp[1];
+
+        // Affichage valeur
+        affiche_rusage("utime",
+            ru_utime_start,
+            ru_utime_stop
+        );
+        affiche_rusage("stime",
+            ru_stime_start,
+            ru_stime_stop
+        );
+
     }
+
 
     return 0;
 }
+
+

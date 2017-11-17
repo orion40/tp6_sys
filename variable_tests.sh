@@ -1,26 +1,32 @@
 #!/bin/bash
 
+# VARIABLE GLOBAL
 NB_TEST=30
 BEGIN_SIZE=10000
+BEGIN_THREAD=1
 NB_THREAD_FIXE=4
-SIZE_FIXE=100000
+SIZE_FIXE=1000000
 
+
+# Appel au fonction Fournis #
 function seq {
-    ./creer_vecteur --size $1 | ./tri_sequentiel -t --quiet;
+    ./creer_vecteur --size $1 | ./tri_sequentiel -r -q;
 }
 
 function thd {
     ./creer_vecteur --size $1 |
-        ./tri_threads -t --quiet --parallelism $2;
+        ./tri_threads -r -q -p $2;
 }
 
-# Nb taille fixe, nb thread variable
+
+# Lancement des teste en fonction des paramètre #
+# Taille fixe, nb thread variable
 function size_fixe {
-    SIZE=$SIZE_FIXE
-    MAX_THREAD=$1
-    COUNTER=0
-    NB_THREADS=1
-    INCREMENT=1
+    SIZE=$SIZE_FIXE # taille du tableau
+    MAX_THREAD=$1 # nombre de thread max
+    COUNTER=0 # nombre de teste éfféctuer par parmaètre
+    NB_THREADS=$BEGIN_THREAD # nombre de thread de départ
+    INCREMENT=1 # incrément du nombre de thread (pas)
     echo "size;temps;num_thread;run_id"
     while [ $NB_THREADS -le $MAX_THREAD ]; do
         while [  $COUNTER -lt $NB_TEST ]; do
@@ -35,13 +41,13 @@ function size_fixe {
     exit 0;
 }
 
-# Nb de thread fixe, taille variable
+# Nb thread fixe, taille variable
 function thd_fixe {
-    NB_THREADS=$NB_THREAD_FIXE
-    MAX_SIZE=$1
-    COUNTER=0
-    SIZE=$BEGIN_SIZE
-    INCREMENT=10000
+    NB_THREADS=$NB_THREAD_FIXE # nombre de thread
+    MAX_SIZE=$1 # taille tableau max
+    COUNTER=0 # nombre de teste éfféctuer par parmaètre
+    SIZE=$BEGIN_SIZE # taille tableau de départ
+    INCREMENT=10000 # incrément de la taille tableau (pas)
     echo "size;temps;num_thread;run_id"
     while [ $SIZE -le $MAX_SIZE ]; do
         while [  $COUNTER -lt $NB_TEST ]; do
