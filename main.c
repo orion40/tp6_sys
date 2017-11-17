@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -9,6 +10,27 @@
 #include "algo_principal.h"
 #include "temps.h"
 #include "commun.h"
+
+void print_rusage(struct rusage ru){
+    printf("user CPU time used %ld s\n", (long)ru.ru_utime.tv_sec);
+    printf("user CPU time used %ld µs\n", (long)ru.ru_utime.tv_usec);
+    printf("system CPU time used %ld s\n", ru.ru_stime.tv_sec);
+    printf("system CPU time used %ld µs\n", ru.ru_stime.tv_usec);
+    printf("maximum resident set size %ld\n", ru.ru_maxrss);
+    printf("integral shared memory size %ld\n", ru.ru_ixrss);
+    printf("integral unshared data size %ld\n", ru.ru_idrss);
+    printf("integral unshared stack size %ld\n", ru.ru_isrss);
+    printf("page reclaims %ld\n", ru.ru_minflt);
+    printf("page faults %ld\n", ru.ru_majflt);
+    printf("swaps %ld\n", ru.ru_nswap);
+    printf("block input operations %ld\n", ru.ru_inblock);
+    printf("block output operations %ld\n", ru.ru_oublock);
+    printf("IPC messages sent %ld\n", ru.ru_msgsnd);
+    printf("IPC messages received %ld\n", ru.ru_msgrcv);
+    printf("signals received %ld\n", ru.ru_nsignals);
+    printf("voluntary context switches %ld\n", ru.ru_nvcsw);
+    printf("involuntary context switches %ld\n", ru.ru_nivcsw);
+}
 
 void usage(char *commande) {
     fprintf(stderr, "Usage :\n");
@@ -28,25 +50,6 @@ void usage(char *commande) {
 }
 
 int quiet=0;
-
-void print_rusage(struct rusage ru){
-    printf("user CPU time used %d µs\n", ru.ru_utime.tv_usec);
-    printf("system CPU time used %d µs\n", ru.ru_stime.tv_usec);
-    printf("maximum resident set size %ld\n", ru.ru_maxrss);
-    printf("integral shared memory size %ld\n", ru.ru_ixrss);
-    printf("integral unshared data size %ld\n", ru.ru_idrss);
-    printf("integral unshared stack size %ld\n", ru.ru_isrss);
-    printf("page reclaims %ld\n", ru.ru_minflt);
-    printf("page faults %ld\n", ru.ru_majflt);
-    printf("swaps %ld\n", ru.ru_nswap);
-    printf("block input operations %ld\n", ru.ru_inblock);
-    printf("block output operations %ld\n", ru.ru_oublock);
-    printf("IPC messages sent %ld\n", ru.ru_msgsnd);
-    printf("IPC messages received %ld\n", ru.ru_msgrcv);
-    printf("signals received %ld\n", ru.ru_nsignals);
-    printf("voluntary context switches %ld\n", ru.ru_nvcsw);
-    printf("involuntary context switches %ld\n", ru.ru_nivcsw);
-}
 
 int main(int argc, char *argv[]) {
     int opt, parallelism = 1;
@@ -101,16 +104,21 @@ int main(int argc, char *argv[]) {
         scanf(" %d", &tableau[i]);
 
     // Time
-    struct timeval tv_before_sort, tv_after_sort;
-    struct rusage ru_before, ru_after;
+    struct timeval t0, t1;
+    struct rusage usage;
+    struct timeval tv_rusage_before, tv_rusage_after;
 
     // TODO : tester si les tests influent beaucoup
     if (ressources == 1){
-        getrusage(RUSAGE_SELF, &ru_before);
+        if (getrusage(RUSAGE_THREAD, &usage) != 0){
+            perror("getrusage");
+        }
+        tv_rusage_before = usage.ru_utime;
     }
     if (temps == 1){
-        if (gettimeofday(&tv_before_sort, NULL) != 0){
+        if (gettimeofday(&t0, NULL) != 0){
             perror("gettimeofday");
+            exit(1);
         }
     }
 
@@ -118,33 +126,29 @@ int main(int argc, char *argv[]) {
     algo_principal(parallelism, tableau, taille, arg);
 
     if (temps == 1){
-        if (gettimeofday(&tv_after_sort, NULL) != 0){
+        if (gettimeofday(&t1, NULL) != 0){
             perror("gettimeofday");
         }
         long result = 0;
         // Ajout des secondes au resultat
         result +=
-            ((long) tv_after_sort.tv_sec - (long) tv_before_sort.tv_sec)*1000000;
-        result += (long) tv_after_sort.tv_usec - (long) tv_before_sort.tv_usec;
-        /*
-        printf("Temps avant : %ld\nTemps après: %ld\n",
-                tv_before_sort.tv_usec, tv_after_sort.tv_usec);
-        printf("Le temps de traitement est de %ld µs.\n",
-                result
-                );
-                */
+            ((long)t1.tv_sec - (long)t0.tv_sec)*1000000;
+        result += (long) t1.tv_usec - (long) t0.tv_usec;
 
-        printf("%ld\n", result);
+        printf("%d;%ld.0", taille, result);
 
     }
     if (ressources == 1){
-        getrusage(RUSAGE_SELF, &ru_after);
+        if (getrusage(RUSAGE_THREAD, &usage) != 0){
+            perror("getrusage");
+            exit(1);
+        }
+        tv_rusage_after = usage.ru_utime;
+        printf("tv_rusage_before: %ld.%lds\n",
+                tv_rusage_before.tv_sec, tv_rusage_before.tv_usec);
+        printf("tv_rusage_after: %ld.%lds\n",
+                tv_rusage_after.tv_sec, tv_rusage_after.tv_usec);
         printf("\n");
-        printf("rusage avant calcul :\n");
-        print_rusage(ru_before);
-        printf("\n");
-        printf("rusage après calcul :\n");
-        print_rusage(ru_after);
     }
 
     return 0;
