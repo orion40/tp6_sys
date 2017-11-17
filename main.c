@@ -14,7 +14,7 @@
 #include "commun.h"
 
 int quiet  = 0;
-int forCsv = 0;
+int forCsv = 1; // 0 = affichage pour user 1 = affichage pour csv
 
 
 /* Affichage du rusage*/
@@ -74,6 +74,7 @@ void get_rusage( struct rusage ru, struct timeval * t){
 
 /* Affichage des résultat */
 void affiche_temps(
+                    int taille,
                     struct timeval tstart,
                     struct timeval tstop,
                     int forCsv
@@ -82,7 +83,7 @@ void affiche_temps(
     struct timeval t_interval;
 
     if(tstart.tv_usec > tstop.tv_usec){
-        t_interval.tv_usec = tstop.tv_usec + 10000 - tstart.tv_usec;
+        t_interval.tv_usec = (tstop.tv_usec) + (1000000 - tstart.tv_usec);
         t_interval.tv_sec = tstop.tv_sec - tstart.tv_sec - 1;
     }
     else{
@@ -90,12 +91,13 @@ void affiche_temps(
         t_interval.tv_sec = tstop.tv_sec - tstart.tv_sec;
     }
 
-    if(forCsv){
-        printf("%ld.%06ld;",
-            t_interval.tv_sec, t_interval.tv_usec
+    if(forCsv == 1){
+        printf("%d;%ld.%06ld;",
+            taille, t_interval.tv_sec, t_interval.tv_usec
         );
     }
     else{
+        printf("Taille tableau : %d\n",taille );
         printf("time start : %ld.%lds\n",
             tstart.tv_sec, tstart.tv_usec
         );
@@ -111,6 +113,7 @@ void affiche_temps(
 
 void affiche_rusage(
                     char* s,
+                    int taille,
                     struct timeval ru_start,
                     struct timeval ru_stop,
                     int forCsv
@@ -119,7 +122,7 @@ void affiche_rusage(
     struct timeval ru_interval;
 
     if(ru_start.tv_usec > ru_stop.tv_usec){
-        ru_interval.tv_usec = ru_stop.tv_usec + 10000 - ru_start.tv_usec;
+        ru_interval.tv_usec = (ru_stop.tv_usec) + (1000000 - ru_start.tv_usec);
         ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec - 1;
     }
     else{
@@ -127,12 +130,13 @@ void affiche_rusage(
         ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec;
     }
 
-    if(forCsv){
-        printf("%ld.%06ld;",
-            ru_interval.tv_sec, ru_interval.tv_usec
+    if(forCsv == 1 ){
+        printf("%d;%ld.%06ld;",
+            taille, ru_interval.tv_sec, ru_interval.tv_usec
         );
     }
     else{
+        printf("Taille tableau : %d\n",taille );
         printf("%s start : %ld.%lds\n",
            s, ru_start.tv_sec, ru_start.tv_usec
         );
@@ -245,7 +249,7 @@ int main(int argc, char *argv[]) {
         if (gettimeofday(&t_stop, NULL) != 0){
             perror("gettimeofday");
         }
-        affiche_temps( t_start, t_stop, forCsv);
+        affiche_temps( taille, t_start, t_stop, forCsv);
     }
     if (ressources == 1){
         // Récupération valeur rusage
@@ -259,15 +263,17 @@ int main(int argc, char *argv[]) {
 
         // Affichage valeur
         affiche_rusage("utime",
-                ru_utime_start,
-                ru_utime_stop,
-                forCsv
+            taille,
+            ru_utime_start,
+            ru_utime_stop,
+            forCsv
         );
 
         affiche_rusage("stime",
-           ru_stime_start,
-           ru_stime_stop,
-           forCsv
+            taille,
+            ru_stime_start,
+            ru_stime_stop,
+            forCsv
         );
     }
 

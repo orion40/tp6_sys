@@ -14,7 +14,6 @@ function tri_seq {
 }
 
 function tri_thd {
-    echo "$3";
     ./creer_vecteur --size $1 | ./tri_threads $2 -q -p $3;
 }
 
@@ -28,13 +27,13 @@ function size_fixe {
     NB_THREADS=$BEGIN_THREAD # nombre de thread de départ
     INCREMENT=1 # incrément du nombre de thread (pas)
     TYPE_AFFICHAGE=$2
-    echo "size;temps;num_thread;run_id"
+    echo "size;temps;nb_thread;run_id"
     tri_seq $SIZE TYPE_AFFICHAGE;
     while [ $NB_THREADS -le $MAX_THREAD ]; do
         while [  $COUNTER -lt $NB_TEST ]; do
             tri_thd $SIZE $TYPE_AFFICHAGE $NB_THREADS ;
             let COUNTER=COUNTER+1
-            echo ";$NB_THREADS;$COUNTER"
+            echo "$NB_THREADS;$COUNTER"
         done
         let NB_THREADS=$NB_THREADS+$INCREMENT
         let COUNTER=0
@@ -75,15 +74,15 @@ if [ $# -eq 3 ]; then
         thd_fixe $2 $3;
     else
         echo "Usage : script [[-nt <nb_thread>]||[-s <taille_tableau>]] [ <type_affichage> ]";
-        echo "nb_thread > 1";
-        echo "taille_tableau > 1000000";
+        echo "nb_thread > 1 (le nombre de thread est variable)";
+        echo "taille_tableau > 1000000 (la taille du tableau est variable)";
         echo "type_affichage = -t || -r";
         exit;
     fi
 else
     echo "Usage : script [[-nt <nb_thread>]||[-s <taille_tableau>]] [ <type_affichage> ]";
-    echo "nb_thread > 1";
-    echo "taille_tableau > 1000000";
+    echo "nb_thread > 1 (le nombre de thread est variable)";
+    echo "taille_tableau > 1000000 (la taille du tableau est variable)";
     echo "type_affichage = -t || -r";
     exit;
 fi
