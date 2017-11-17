@@ -142,13 +142,14 @@ int main(int argc, char *argv[]) {
         if (getrusage(RUSAGE_THREAD, &usage) != 0){
             perror("getrusage");
             exit(1);
+        } else {
+            tv_rusage_after = usage.ru_utime;
+            printf("tv_rusage_before: %ld.%lds\n",
+                    tv_rusage_before.tv_sec, tv_rusage_before.tv_usec);
+            printf("tv_rusage_after: %ld.%lds\n",
+                    tv_rusage_after.tv_sec, tv_rusage_after.tv_usec);
+            printf("\n");
         }
-        tv_rusage_after = usage.ru_utime;
-        printf("tv_rusage_before: %ld.%lds\n",
-                tv_rusage_before.tv_sec, tv_rusage_before.tv_usec);
-        printf("tv_rusage_after: %ld.%lds\n",
-                tv_rusage_after.tv_sec, tv_rusage_after.tv_usec);
-        printf("\n");
     }
 
     return 0;
