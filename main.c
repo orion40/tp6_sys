@@ -107,6 +107,10 @@ int main(int argc, char *argv[]) {
     struct timeval t0, t1;
     struct rusage usage;
     struct timeval tv_rusage_before, tv_rusage_after;
+    tv_rusage_after.tv_usec = 0;
+    tv_rusage_after.tv_sec = 0;
+    tv_rusage_before.tv_usec = 0;
+    tv_rusage_before.tv_sec = 0;
 
     // TODO : tester si les tests influent beaucoup
     if (ressources == 1){
