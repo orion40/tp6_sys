@@ -76,26 +76,32 @@ void affiche_rusage(char* s,
 
     struct timeval ru_interval;
 
-    printf("%s start : %ld.%lds\n",
-        s, ru_start.tv_sec, ru_start.tv_usec
-    );
-    printf("%s stop : %ld.%lds\n",
-        s, ru_stop.tv_sec, ru_stop.tv_usec
-    );
+    /*
+       printf("%s start : %ld.%lds\n",
+       s, ru_start.tv_sec, ru_start.tv_usec
+       );
+       printf("%s stop : %ld.%lds\n",
+       s, ru_stop.tv_sec, ru_stop.tv_usec
+       );
+       */
 
     if(ru_start.tv_usec > ru_stop.tv_usec){
-    ru_interval.tv_usec = ru_stop.tv_usec + 10000 - ru_start.tv_usec;
-    ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec - 1;
+        ru_interval.tv_usec = ru_stop.tv_usec + 10000 - ru_start.tv_usec;
+        ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec - 1;
     }
     else{
         ru_interval.tv_usec = ru_stop.tv_usec - ru_start.tv_usec;
         ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec;
     }
 
-    printf("intervalle rusage : %ld.%lds\n",
-        ru_interval.tv_sec, ru_interval.tv_usec
-    );
-    printf("\n");
+    /*
+       printf("intervalle rusage : %ld.%lds\n",
+       ru_interval.tv_sec, ru_interval.tv_usec
+       );
+       */
+    printf("%ld.%06ld;",
+            ru_interval.tv_sec, ru_interval.tv_usec
+          );
 }
 
 
@@ -110,8 +116,8 @@ int main(int argc, char *argv[]) {
     // Initialisation des variables
     struct timeval t0, t1; // pour gettimeofday
     struct rusage ru; // Récupération rusage
-    struct timeval ru_utime_start, ru_stime_start;
-    struct timeval ru_utime_stop, ru_stime_stop;
+    struct timeval ru_utime_start, ru_utime_stop;
+    struct timeval ru_stime_stop, ru_stime_start;
     //struct timeval * tab_temp; // Récupération time rusage temporaire
     ru_utime_start.tv_sec = 0;
     ru_utime_start.tv_usec = 0;
@@ -135,24 +141,24 @@ int main(int argc, char *argv[]) {
 
     while ((opt = getopt_long(argc, argv, "hp:qrta:", longopts, NULL)) != -1) {
         switch (opt) {
-          case 'p':
-            parallelism = atoi(optarg);
-            break;
-          case 'q':
-            quiet = 1;
-            break;
-          case 'r':
-            ressources = 1;
-            break;
-          case 't':
-            temps = 1;
-            break;
-          case 'a':
-            arg = optarg;
-            break;
-          case 'h':
-          default:
-            usage(argv[0]);
+            case 'p':
+                parallelism = atoi(optarg);
+                break;
+            case 'q':
+                quiet = 1;
+                break;
+            case 'r':
+                ressources = 1;
+                break;
+            case 't':
+                temps = 1;
+                break;
+            case 'a':
+                arg = optarg;
+                break;
+            case 'h':
+            default:
+                usage(argv[0]);
         }
     }
     argc -= optind;
@@ -210,15 +216,18 @@ int main(int argc, char *argv[]) {
         ru_utime_stop = tab_temp[0];
         ru_stime_stop = tab_temp[1];
 
+        printf("%d;", taille);
         // Affichage valeur
         affiche_rusage("utime",
-            ru_utime_start,
-            ru_utime_stop
-        );
-        affiche_rusage("stime",
-            ru_stime_start,
-            ru_stime_stop
-        );
+                ru_utime_start,
+                ru_utime_stop
+                );
+        /*
+           affiche_rusage("stime",
+           ru_stime_start,
+           ru_stime_stop
+           );
+           */
 
     }
 
