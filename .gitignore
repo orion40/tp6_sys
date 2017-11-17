@@ -1,3 +1,8 @@
 *.swp
 .*
 *.o
+*.csv
+*.pdf
+tri_sequentel
+tri_threads
+creer_vecteur
