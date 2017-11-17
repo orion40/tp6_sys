@@ -50,12 +50,12 @@ function thd_fixe {
     SIZE=$BEGIN_SIZE # taille tableau de départ
     INCREMENT=10000 # incrément de la taille tableau (pas)
     TYPE_AFFICHAGE=$2
-    echo "size;temps;num_thread;run_id"
+    echo "size;temps;nb_thread;run_id"
     while [ $SIZE -le $MAX_SIZE ]; do
         while [  $COUNTER -lt $NB_TEST ]; do
             tri_thd $SIZE $TYPE_AFFICHAGE $NB_THREADS;
             let COUNTER=COUNTER+1
-            echo ";$NB_THREADS;$COUNTER"
+            echo "$NB_THREADS;$COUNTER"
         done
         let SIZE=SIZE+$INCREMENT
         let COUNTER=0

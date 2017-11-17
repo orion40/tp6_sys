@@ -131,8 +131,8 @@ void affiche_rusage(
     }
 
     if(forCsv == 1 ){
-        printf("%d;%ld.%06ld;",
-            taille, ru_interval.tv_sec, ru_interval.tv_usec
+        printf("%ld.%06ld;",
+            ru_interval.tv_sec, ru_interval.tv_usec
         );
     }
     else{
@@ -269,12 +269,15 @@ int main(int argc, char *argv[]) {
             forCsv
         );
 
-        affiche_rusage("stime",
-            taille,
-            ru_stime_start,
-            ru_stime_stop,
-            forCsv
-        );
+        // Valeur temps kernel trop instable
+        if (forCsv == 0){
+            affiche_rusage("stime",
+                    taille,
+                    ru_stime_start,
+                    ru_stime_stop,
+                    forCsv
+                    );
+        }
     }
 
 
