@@ -170,9 +170,9 @@ AM_CFLAGS = -W -Wall -Werror -g
 PRINCIPAL = main.c temps.c algo_principal.h appels_sequentiels.h commun.h temps.h
 TRI = tri.c $(PRINCIPAL)
 creer_vecteur_SOURCES = creer_vecteur.c
-tri_threads_SOURCES = algo_threads.c $(TRI)
+tri_threads_SOURCES = algo_threads.c $(TRI) rusage_func.c
 tri_threads_LDADD = -lpthread
-tri_sequentiel_SOURCES = algo_sequentiel.c $(TRI)
+tri_sequentiel_SOURCES = algo_sequentiel.c $(TRI) rusage_func.c
 all: all-am
 
 .SUFFIXES:
