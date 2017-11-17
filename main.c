@@ -112,7 +112,6 @@ int main(int argc, char *argv[]) {
     struct rusage ru; // Récupération rusage
     struct timeval ru_utime_start, ru_stime_start;
     struct timeval ru_utime_stop, ru_stime_stop;
-    //struct timeval * tab_temp; // Récupération time rusage temporaire
     ru_utime_start.tv_sec = 0;
     ru_utime_start.tv_usec = 0;
     ru_stime_start.tv_sec = 0;
