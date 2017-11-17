@@ -73,11 +73,48 @@ void get_rusage( struct rusage ru, struct timeval * t){
 
 
 /* Affichage des résultat */
-void affiche_rusage(char* s,
+void affiche_temps(
+                    struct timeval tstart,
+                    struct timeval tstop,
+                    int forCsv
+                ){
+
+    struct timeval t_interval;
+
+    if(tstart.tv_usec > tstop.tv_usec){
+        t_interval.tv_usec = tstop.tv_usec + 10000 - tstart.tv_usec;
+        t_interval.tv_sec = tstop.tv_sec - tstart.tv_sec - 1;
+    }
+    else{
+        t_interval.tv_usec = tstop.tv_usec - tstart.tv_usec;
+        t_interval.tv_sec = tstop.tv_sec - tstart.tv_sec;
+    }
+
+    if(forCsv){
+        printf("%ld.%06ld;",
+            t_interval.tv_sec, t_interval.tv_usec
+        );
+    }
+    else{
+        printf("time start : %ld.%lds\n",
+            tstart.tv_sec, tstart.tv_usec
+        );
+        printf("time stop : %ld.%lds\n",
+            tstop.tv_sec, tstop.tv_usec
+        );
+        printf("intervalle time : %ld.%lds\n",
+            t_interval.tv_sec, t_interval.tv_usec
+        );
+    }
+}
+
+
+void affiche_rusage(
+                    char* s,
                     struct timeval ru_start,
                     struct timeval ru_stop,
                     int forCsv
-                    ){
+                ){
 
     struct timeval ru_interval;
 
@@ -115,12 +152,12 @@ void affiche_rusage(char* s,
 
 int main(int argc, char *argv[]) {
     int opt, parallelism = 1;
-    int taille, i, temps, ressources = 0;
+    int taille, i, temps = 0, ressources = 0;
     int *tableau;
     char *arg=NULL;
 
     // Initialisation des variables
-    struct timeval t0, t1; // pour gettimeofday
+    struct timeval t_start, t_stop; // pour gettimeofday
     struct rusage ru; // Récupération rusage
     struct timeval ru_utime_start, ru_utime_stop;
     struct timeval ru_stime_start, ru_stime_stop;
@@ -184,7 +221,7 @@ int main(int argc, char *argv[]) {
 
     /* Test PREéxécution */
     if (temps == 1){
-        if (gettimeofday(&t0, NULL) != 0){
+        if (gettimeofday(&t_start, NULL) != 0){
             perror("gettimeofday");
             exit(1);
         }
@@ -205,16 +242,10 @@ int main(int argc, char *argv[]) {
 
     /* Test POSTéxécution */
     if (temps == 1){
-        if (gettimeofday(&t1, NULL) != 0){
+        if (gettimeofday(&t_stop, NULL) != 0){
             perror("gettimeofday");
         }
-        long result = 0;
-        // Ajout des secondes au resultat
-        result +=
-            ((long)t1.tv_sec - (long)t0.tv_sec)*1000000;
-        result += (long) t1.tv_usec - (long) t0.tv_usec;
-
-        printf("%d;%ld", taille, result);
+        affiche_temps( t_start, t_stop, forCsv);
     }
     if (ressources == 1){
         // Récupération valeur rusage

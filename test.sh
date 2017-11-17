@@ -1,80 +1,90 @@
 #!/bin/bash
 
-echo "Deprecated test."
+# VARIABLE GLOBAL
+NB_TEST=30
+BEGIN_SIZE=10000
+BEGIN_THREAD=1
+NB_THREAD_FIXE=4
+SIZE_FIXE=100000
 
-#NB_TEST=30
-#BEGIN_SIZE=10000
-#MAX_FIXE_SIZE=100000
-#NB_THREAD_FIXE=4
-#
-#function seq {
-#    ./creer_vecteur --size $1 | ./tri_sequentiel -t --quiet;
-#}
-#
-#function thd {
-#    ./creer_vecteur --size $1 |
-#        ./tri_threads -t --quiet --parallelism $2;
-#}
-#
-#function size_fixe {
-#    COUNTER=0
-#    SIZE=$BEGIN_SIZE
-#    MAX_SIZE=$2
-#    NB_THREADS=$NB_THREAD_FIXE
-#    INCREMENT=10000
-#    echo "size;temps;run_id"
-#    while [ $SIZE -le $MAX_SIZE ]; do
-#        while [  $COUNTER -lt $NB_TEST ]; do
-#            if [ -z $NB_THREADS ]; then
-#                seq $SIZE;
-#            else
-#                thd $SIZE $NB_THREADS;
-#            fi
-#            let COUNTER=COUNTER+1
-#            echo ";$COUNTER"
-#        done
-#        let SIZE=SIZE+$INCREMENT
-#        let COUNTER=0
-#    done
-#
-#    exit 0;
-#}
-#
-#function thd_fixe {
-#    COUNTER=0
-#    SIZE=$BEGIN_SIZE
-#    MAX_SIZE=$MAX_FIXE_SIZE
-#    NB_THREADS="$1"
-#    INCREMENT=10000
-#    echo "size;temps;run_id"
-#    while [ $SIZE -le $MAX_SIZE ]; do
-#        while [  $COUNTER -lt $NB_TEST ]; do
-#            thd $SIZE $NB_THREADS;
-#            let COUNTER=COUNTER+1
-#            echo ";$COUNTER"
-#        done
-#        let SIZE=SIZE+$INCREMENT
-#        let COUNTER=0
-#    done
-#
-#    exit 0;
-#}
-#
-#if [ $# -le 1 ]; then
-#    echo "Usage : script [-t <nb_thread>] [-s <taille_tableau>]";
-#    exit;
-#fi
-#if [ $2 -lt $BEGIN_SIZE ]; then
-#    echo "Value is too small.";
-#    exit;
-#fi
-#if [ $# -eq 3 ]; then
-#    if [ $1 = "-t" ]; then
-#        thd_fixe $2;
-#    elif [ $1 = "-s" ]; then
-#        size_fixe $2;
-#    else
-#        echo "Usage : script [-t <nb_thread>] [-s <taille_tableau>]";
-#        exit;
-#    fi
-#fi
+
+# Appel au fonction Fournis #
+function tri_seq {
+    ./creer_vecteur --size $1 | ./tri_sequentiel $2 -q;
+}
+
+function tri_thd {
+    echo "$3";
+    ./creer_vecteur --size $1 | ./tri_threads $2 -q -p $3;
+}
+
+
+# Lancement des teste en fonction des paramètre #
+# Taille fixe, nb thread variable
+function size_fixe {
+    SIZE=$SIZE_FIXE # taille du tableau
+    MAX_THREAD=$1 # nombre de thread max
+    COUNTER=0 # nombre de teste éfféctuer par parmaètre
+    NB_THREADS=$BEGIN_THREAD # nombre de thread de départ
+    INCREMENT=1 # incrément du nombre de thread (pas)
+    TYPE_AFFICHAGE=$2
+    echo "size;temps;num_thread;run_id"
+    tri_seq $SIZE TYPE_AFFICHAGE;
+    while [ $NB_THREADS -le $MAX_THREAD ]; do
+        while [  $COUNTER -lt $NB_TEST ]; do
+            tri_thd $SIZE $TYPE_AFFICHAGE $NB_THREADS ;
+            let COUNTER=COUNTER+1
+            echo ";$NB_THREADS;$COUNTER"
+        done
+        let NB_THREADS=$NB_THREADS+$INCREMENT
+        let COUNTER=0
+    done
+
+    exit 0;
+}
+
+# Nb thread fixe, taille variable
+function thd_fixe {
+    NB_THREADS=$NB_THREAD_FIXE # nombre de thread
+    MAX_SIZE=$1 # taille tableau max
+    COUNTER=0 # nombre de teste éfféctuer par parmaètre
+    SIZE=$BEGIN_SIZE # taille tableau de départ
+    INCREMENT=10000 # incrément de la taille tableau (pas)
+    TYPE_AFFICHAGE=$2
+    echo "size;temps;num_thread;run_id"
+    while [ $SIZE -le $MAX_SIZE ]; do
+        while [  $COUNTER -lt $NB_TEST ]; do
+            tri_thd $SIZE $TYPE_AFFICHAGE $NB_THREADS;
+            let COUNTER=COUNTER+1
+            echo ";$NB_THREADS;$COUNTER"
+        done
+        let SIZE=SIZE+$INCREMENT
+        let COUNTER=0
+    done
+
+    exit 0;
+}
+
+
+
+# Execution
+if [ $# -eq 3 ]; then
+    if [ $1 = "-nt" ]; then
+        size_fixe $2 $3;
+    elif [ $1 = "-s" ]; then
+        thd_fixe $2 $3;
+    else
+        echo "Usage : script [[-nt <nb_thread>]||[-s <taille_tableau>]] [ <type_affichage> ]";
+        echo "nb_thread > 1";
+        echo "taille_tableau > 1000000";
+        echo "type_affichage = -t || -r";
+        exit;
+    fi
+else
+    echo "Usage : script [[-nt <nb_thread>]||[-s <taille_tableau>]] [ <type_affichage> ]";
+    echo "nb_thread > 1";
+    echo "taille_tableau > 1000000";
+    echo "type_affichage = -t || -r";
+    exit;
+fi
+
