@@ -13,7 +13,8 @@
 #include "temps.h"
 #include "commun.h"
 
-int quiet = 0;
+int quiet  = 0;
+int forCsv = 0;
 
 
 /* Affichage du rusage*/
@@ -42,7 +43,7 @@ void print_rusage(struct rusage ru){
 void usage(char *commande) {
     fprintf(stderr, "Usage :\n");
     fprintf(stderr, "%s [ --parallelism number ] [ --quiet ] [ --time ] "
-                    "[ --rusage ] [ --arg argument ] [ --help ]\n\n",
+                    "[ --rusage ] [ --arg argument ] [ --csv ][ --help ]\n\n",
                     commande);
     fprintf(stderr, "Ce programme lit sur son entree standard un vecteur "
                     "a traiter. Il accepte comme options --parallelism qui "
@@ -51,8 +52,11 @@ void usage(char *commande) {
                     "superflus, --time qui affiche le temps total passe "
                     "dans l'algorithme principal, --rusage qui affiche "
                     "le temps d'utilisation des resources attribue aux "
-                    "differents threads/processus et --arg qui permet de "
-                    "transmettre un argument à l'algorithme execute.\n");
+                    "differents threads/processus, --arg qui permet de "
+                    "transmettre un argument à l'algorithme execute, "
+                    "--time qui affiche le temps exécution, --ressource "
+                    "qui affiche le temps exécution et --csv qui affiche "
+                    "pour le format csv\n");
     exit(1);
 }
 
@@ -71,19 +75,11 @@ void get_rusage( struct rusage ru, struct timeval * t){
 /* Affichage des résultat */
 void affiche_rusage(char* s,
                     struct timeval ru_start,
-                    struct timeval ru_stop
+                    struct timeval ru_stop,
+                    int forCsv
                     ){
 
     struct timeval ru_interval;
-
-    /*
-       printf("%s start : %ld.%lds\n",
-       s, ru_start.tv_sec, ru_start.tv_usec
-       );
-       printf("%s stop : %ld.%lds\n",
-       s, ru_stop.tv_sec, ru_stop.tv_usec
-       );
-       */
 
     if(ru_start.tv_usec > ru_stop.tv_usec){
         ru_interval.tv_usec = ru_stop.tv_usec + 10000 - ru_start.tv_usec;
@@ -94,14 +90,24 @@ void affiche_rusage(char* s,
         ru_interval.tv_sec = ru_stop.tv_sec - ru_start.tv_sec;
     }
 
-    /*
-       printf("intervalle rusage : %ld.%lds\n",
-       ru_interval.tv_sec, ru_interval.tv_usec
-       );
-       */
-    printf("%ld.%06ld;",
+    if(forCsv){
+        printf("%ld.%06ld;",
             ru_interval.tv_sec, ru_interval.tv_usec
-          );
+        );
+    }
+    else{
+        printf("%s start : %ld.%lds\n",
+           s, ru_start.tv_sec, ru_start.tv_usec
+        );
+        printf("%s stop : %ld.%lds\n",
+           s, ru_stop.tv_sec, ru_stop.tv_usec
+        );
+        printf("intervalle rusage : %ld.%lds\n",
+            ru_interval.tv_sec, ru_interval.tv_usec
+        );
+    }
+
+
 }
 
 
@@ -109,15 +115,16 @@ void affiche_rusage(char* s,
 
 int main(int argc, char *argv[]) {
     int opt, parallelism = 1;
-    int taille, i, temps = 0, ressources = 0;
+    int taille, i, temps, ressources = 0;
     int *tableau;
     char *arg=NULL;
 
     // Initialisation des variables
     struct timeval t0, t1; // pour gettimeofday
     struct rusage ru; // Récupération rusage
-    struct timeval ru_utime_start, ru_stime_start;
-    struct timeval ru_utime_stop, ru_stime_stop;
+    struct timeval ru_utime_start, ru_utime_stop;
+    struct timeval ru_stime_start, ru_stime_stop;
+    struct timeval tab_temp[2];
     ru_utime_start.tv_sec = 0;
     ru_utime_start.tv_usec = 0;
     ru_stime_start.tv_sec = 0;
@@ -126,7 +133,7 @@ int main(int argc, char *argv[]) {
     ru_utime_stop.tv_usec = 0;
     ru_stime_stop.tv_sec = 0;
     ru_stime_stop.tv_usec = 0;
-    struct timeval tab_temp[2];
+
 
     struct option longopts[] = {
         { "help", required_argument, NULL, 'h' },
@@ -138,7 +145,7 @@ int main(int argc, char *argv[]) {
         { NULL, 0, NULL, 0 }
     };
 
-    while ((opt = getopt_long(argc, argv, "hp:qrta:", longopts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hp:qrtca:", longopts, NULL)) != -1) {
         switch (opt) {
             case 'p':
                 parallelism = atoi(optarg);
@@ -215,19 +222,22 @@ int main(int argc, char *argv[]) {
         ru_utime_stop = tab_temp[0];
         ru_stime_stop = tab_temp[1];
 
-        printf("%d;", taille);
+        if(forCsv){
+            printf("%d;", taille);
+        }
+
         // Affichage valeur
         affiche_rusage("utime",
                 ru_utime_start,
-                ru_utime_stop
-                );
-        /*
-           affiche_rusage("stime",
-           ru_stime_start,
-           ru_stime_stop
-           );
-           */
+                ru_utime_stop,
+                forCsv
+        );
 
+        affiche_rusage("stime",
+           ru_stime_start,
+           ru_stime_stop,
+           forCsv
+        );
     }
 
 
