@@ -10,12 +10,12 @@ SIZE_FIXE=1000000
 
 # Appel au fonction Fournis #
 function seq {
-    ./creer_vecteur --size $1 | ./tri_sequentiel -r -q;
+    ./creer_vecteur --size $1 | ./tri_sequentiel -t -q;
 }
 
 function thd {
     ./creer_vecteur --size $1 |
-        ./tri_threads -r -q -p $2;
+        ./tri_threads -t -q -p $2;
 }
 
 
