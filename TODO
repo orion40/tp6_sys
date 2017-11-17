@@ -1,0 +1,8 @@
+thread 1-16 tableau fixe
+thread 4 tableau variant
+
+NB_thd, taille tableau
+0 thd ? varié 1-16
+0 taille ? variable
+
+Pour le graph : scale plutot que la moyenne
